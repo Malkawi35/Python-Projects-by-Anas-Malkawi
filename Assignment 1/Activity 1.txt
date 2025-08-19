@@ -1,0 +1,9 @@
+Start
+
+Display "Welcome to Python :)"
+Ask the user to click YES or No, to take Python Course
+If user clicks YES
+START Python Course
+IF user clicks NO,
+Display "Wrong Choice"
+END
