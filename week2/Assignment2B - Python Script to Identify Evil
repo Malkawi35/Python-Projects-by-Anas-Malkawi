@@ -1,0 +1,47 @@
+import os, pathlib, subprocess
+
+def CheckValidTask(creator, task): #CheckValidTask is a function which checks if scheduled tasks looks a safe task or a suspicious task.
+
+    allowlist = ["Microsoft", "Mozilla", "Adobe Systems Incorporated"] #This is an allowlist that is linked to the creator scheduled task.
+    #So in other terms if a scheduled task creator name starts with one of these strings for example Microsoft then when you run this code it will find if a task
+    #creator matched Microsoft.
+    extensions = [".exe", ".py", ".dll"]
+    #These are a list of file types that the code needs to pay attention for.
+
+    trusted = any(creator.startswith(x) for x in allowlist) #This checks the creators filed and compares between each string in the allowlist.
+    #If the creators name starts with one of the allowlist strings (e.g., Microsoft) then it means trusted and gives true but if they are not from the allow list
+    #Then it will give false.
+    executable = any(ext in task.lower() for ext in extensions)
+    #This one is the same thing for creator but the difference is that it is for file extensions.
+
+    if executable:
+        exe = task.split(" ")[0] #In here the task is a=the command that the scheduled tasks runs. And task.split("") splits the strings into peaces.
+        #[0] The 0 in here means that take the first part which is the path to the program.
+        p = os.path.expandvars(exe).lower() #In this code is used to expand the environment variable names in the given path, it replaces substrings
+        #of the form %name%. So basically if the scheduled task runs in this format %SystemRoot%, the expandvars() will replace %SystemRoot% with C:/Windows.
+
+        if p.startswith(r"c:\windows\system32") or p.startswith(r"c:\\windows\\system32"):
+            return True
+        else:
+            return trusted
+    else:
+        return True
+
+
+output_bytes = subprocess.check_output(
+    'schtasks /query /v /fo csv /nh', shell=True
+)
+output = output_bytes.decode(errors="ignore").splitlines()
+results = [o.split(',') for o in output]
+#In the above code runs the windows schtasks and lists all the scheduled tasks and then it makes them in readable text.
+
+for res in results:
+    result = [x.strip('"') for x in res]
+    if len(result) > 8:
+        name = result[1]
+        creator = result[7]
+        task = result[8]
+        if not CheckValidTask(creator, task):
+            print(f"{name}, {creator}, {task},")
+#In this final code it goes through every scheduled task on the system and picks out the task name, creator and the action, and runs them through the security
+#check to see if the task looks suspicious. If it is suspicious then it prints it's details.
