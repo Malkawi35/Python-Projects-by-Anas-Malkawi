@@ -1,0 +1,40 @@
+import requests
+import json
+
+API_Key = "Enter your API Key" #Please sign up in VirusTotal and gain your API key to run this code.
+
+def check_hash(hash_value):
+    url = f"https://www.virustotal.com/api/v3/files/{hash_value}"
+    headers = {"x-apikey": API_Key}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        result = response.json()
+        print("VirusTotal Result:")
+        print(json.dumps(result, indent=4))
+    else:
+        print(f"Error: {response.status_code}: {response.text}")
+
+def check_ip(ip_to_check):
+    url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip_to_check}"
+    headers = {"x-apikey": API_Key}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        result = response.json()
+        print("VirusTotal Result:")
+        print(json.dumps(result, indent=4))
+    else:
+        print(f"Error: {response.status_code}: {response.text}")
+
+if __name__ == "__main__":
+    indicator =input("Enter a hash or IP Address: ").strip()
+    kind = input("Type 'ip' or 'hash' to select:").strip()
+
+    if kind == "hash":
+        check_hash(indicator)
+    elif kind == "ip":
+        check_ip(indicator)
+    else:
+        print("Please enter a valid choice.")
+
