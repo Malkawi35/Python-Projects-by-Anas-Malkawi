@@ -8,7 +8,7 @@ http_payload = (
     "Host: 52.234.30.228\r\n"
     "User-Agent: ScapyTest/1.0\r\n"
     "Accept: */*\r\n"
-    "Custom-Payload: <script>alert('XSS');</script>\r\n"
+    "Custom-Payload: <script>alert('XSS');</script>\r\n" 
     "\r\n"
 )
 
