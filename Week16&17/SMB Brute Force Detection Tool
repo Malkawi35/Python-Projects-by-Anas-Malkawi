@@ -1,0 +1,179 @@
+
+
+import ctypes
+import subprocess
+import sys
+from collections import defaultdict
+
+#This is ASCII art showing SMB
+ascii_art = """
+╔════════════════════════════════════════════════════════╗
+║                                                        ║
+║           ███████╗███╗   ███╗██████╗                   ║
+║           ██╔════╝████╗ ████║██╔══██╗                  ║
+║           ███████╗██╔████╔██║██████╔╝                  ║
+║           ╚════██║██║╚██╔╝██║██╔══██╗                  ║
+║           ███████║██║ ╚═╝ ██║██████╔╝                  ║
+║           ╚══════╝╚═╝     ╚═╝╚═════╝                   ║
+║                                                        ║
+║     Brute Force Detection                              ║
+║     Analyzing SMB Authentication Logs                  ║
+║                                                        ║
+╚════════════════════════════════════════════════════════╝
+"""
+
+
+# This code checks if the script is running with administration privileges.
+def check_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
+# In this code block we look for Event ID 4625 from Windows security event log which means failed login attempts.
+def fetch_failed_logins():
+    powershell_cmd = """
+    Get-WinEvent -FilterHashtable @{LogName='Security';ID=4625} -MaxEvents 50 | 
+    Select-Object TimeCreated, @{Name='Account';Expression={$_.Properties[5].Value}}, 
+    @{Name='SourceIP';Expression={$_.Properties[19].Value}} | 
+    ConvertTo-Csv -NoTypeInformation
+    """
+
+    try:
+        result = subprocess.run(
+            ["powershell", "-Command", powershell_cmd],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        # In this code we filter out empty lines and return the log entries
+        return [line for line in result.stdout.strip().split('\n')[1:] if line]
+    except Exception as e:
+        print(f"[!] Error retrieving logs: {e}")
+        return []
+
+
+# This will take the failed login events and organize them by source IP address and account name
+def analyze_failed_logins(failed_logins):
+    ip_attempts = defaultdict(list)  # <-- In this code we track all accounts attacked from each IP address
+    user_attempts = defaultdict(list)  # <--- This tracks all IP addresses that are attacking each account
+
+    for entry in failed_logins:
+        if ',' not in entry:
+            continue
+
+        try:
+            parts = entry.split(',')
+            if len(parts) >= 3:
+                timestamp = parts[0].strip('"')
+                account_name = parts[1].strip('"')
+                source_ip = parts[2].strip('"')
+
+                # This stores attempt details organized by IP
+                ip_attempts[source_ip].append(account_name)
+                # This code stores attempt details organized by account
+                user_attempts[account_name].append(source_ip)
+        except:
+            continue
+
+    return ip_attempts, user_attempts
+
+
+# In this code we try to identify brute force patterns
+def detect_brute_force(ip_attempts, user_attempts):
+    suspicious_findings = []
+
+    # This code checks if one Ip address is attacking 3 or more accounts, then flag it as a brute force attack
+    for source_ip, accounts_targeted in ip_attempts.items():
+        if len(accounts_targeted) >= 3:  # This means if 3 or more account targeted from the same IP address then flag as brute force attack
+            suspicious_findings.append({
+                'type': 'IP_ATTACK',
+                'indicator': source_ip,
+                'count': len(accounts_targeted),
+                'details': ', '.join(set(accounts_targeted))
+            })
+
+    # In here we check if the same account is being attacked from multiple sources.
+    for account, source_ips in user_attempts.items():
+        if len(source_ips) >= 3:  # In here this code means if one account has 3 or more failed attempts from different sources, then it is suspicious
+            suspicious_findings.append({
+                'type': 'USER_ATTACK',
+                'indicator': account,
+                'count': len(source_ips),
+                'details': ', '.join(set(source_ips))
+            })
+
+    return suspicious_findings
+
+
+# This display the founded results and risk assessment
+def display_results(findings, total_attempts):
+    print("=" * 70)
+    print("[*] DETECTION ANALYSIS REPORT")
+    print("=" * 70)
+
+    if not findings:
+        print("[✓] Status: SECURE - No brute force patterns detected")
+        print(f"[*] Total failed login attempts analyzed: {total_attempts}")
+    else:
+        print(f"[!] Status: ALERT - {len(findings)} suspicious pattern(s) detected!")
+        print(f"[*] Total failed login attempts: {total_attempts}\n")
+
+        for finding in findings:
+            if finding['type'] == 'IP_ATTACK':
+                print(f"  [THREAT] Source IP: {finding['indicator']}")
+                print(f"           Failed attempts: {finding['count']}")
+                print(f"           Targeted accounts: {finding['details']}\n")
+            elif finding['type'] == 'USER_ATTACK':
+                print(f"  [THREAT] Target Account: {finding['indicator']}")
+                print(f"           Failed attempts: {finding['count']}")
+                print(f"           Attack sources: {finding['details']}\n")
+
+        print("=" * 70)
+        print("[!] RISK LEVEL: HIGH")
+        print("[*] Recommendation: Implement account lockout policies immediately")
+        print("[*] Action: Review security logs for compromised credentials")
+        print("[*] Note: Monitor for indicators of compromise on affected accounts")
+
+    print("=" * 70)
+
+
+# In here the is main program execution
+def main():
+    print(ascii_art)
+
+    # This code will verify administrator privileges before accessing security logs
+    if not check_admin():
+        print("[!] ERROR: Administrator privileges are required!") # If the program ran without administrator privileges then  print please run with admin privileges.
+        print("[*] Please run this script as Administrator and try again.\n")
+        sys.exit(1)
+
+    print("[✓] Administrator privileges verified\n")
+
+    # This code will retrieve failed login events from Windows Event Log
+    print("[*] Scanning Windows Security Event Log for Event ID 4625...")
+    print("[*] Looking for failed SMB authentication attempts...\n")
+
+    failed_logins = fetch_failed_logins()
+
+    if not failed_logins:
+        print("[*] No failed login events found in recent logs.")
+        return
+
+    print(f"[*] Retrieved {len(failed_logins)} failed login event(s)\n")
+
+    # This code will analyze any patterns in the failed logins
+    print("[*] Analyzing failed login patterns...\n")
+    ip_attempts, user_attempts = analyze_failed_logins(failed_logins)
+
+    # This detects the brute force indicators
+    findings = detect_brute_force(ip_attempts, user_attempts)
+
+    # This code will display the final results
+    display_results(findings, len(failed_logins))
+
+
+# This final code means execute the main function of the program.
+if __name__ == "__main__":
+    main()
