@@ -2,9 +2,10 @@
 
 from shodan import Shodan
 import json
+import os
 #Please provide your own Shodan API. Mine not provided for security reasons. Thanks for your understanding.
 #To get Shodan API you need to have an account with Shodan, and then search Shodan API Keys to find your own API key.
-api_key = Shodan('<<API KEY>>')
+api_key = Shodan(os.environ['SHODAN_API_KEY'])  # export SHODAN_API_KEY=...
 class ShodanHostDetailsParser:
     def parse_host_details(self, ip_address):
         """

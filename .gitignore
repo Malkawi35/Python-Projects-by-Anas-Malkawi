@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Tool output / local artifacts
+*.json
+checksums.csv
+whois.json
+scan_*.json
+Shodan*.json
+
+# Secrets / local config
+.env
+*.key
+secrets.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

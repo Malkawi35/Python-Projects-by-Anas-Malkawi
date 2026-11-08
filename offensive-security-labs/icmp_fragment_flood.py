@@ -28,6 +28,6 @@ def icmpFlood(targetIp, packetCount):
     except Exception as e:
         print(f"Error: {e}")
 
-targetIp = "192.168.56.102"  #IP address of the victim's machine
+targetIp = "198.51.100.10"  #IP address of the victim's machine
 packetCount = 100  
 icmpFlood(targetIp, packetCount)
