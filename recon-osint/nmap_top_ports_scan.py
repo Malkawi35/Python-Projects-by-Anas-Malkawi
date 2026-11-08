@@ -14,4 +14,5 @@ class NmapPortScanner:
         print(json.dumps(scan_results, indent=4))
 if __name__ == "__main__":
     nmap_scanner = NmapPortScanner()
-    nmap_scanner.port_scan('52.234.30.228')
+    target = input('Enter target IP/host (must be authorized): ').strip()
+    nmap_scanner.port_scan(target)

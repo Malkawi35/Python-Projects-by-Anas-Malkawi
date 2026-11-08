@@ -20,4 +20,4 @@ def ssh_bruteforce(host, username, password_file):
             print(f"[!] Error: {e}")
 
 # Run the brute force
-ssh_bruteforce("52.234.30.228", "sshhackme", "passwords.txt")
+ssh_bruteforce("203.0.113.10", "sshhackme", "passwords.txt")

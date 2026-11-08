@@ -1,7 +1,8 @@
 import requests
 import json
+import os
 
-API_Key = "Enter your API Key" #Please sign up in VirusTotal and gain your API key to run this code.
+API_Key = os.environ["VT_API_KEY"]  # export VT_API_KEY=... (free key from virustotal.com)
 
 def check_hash(hash_value):
     url = f"https://www.virustotal.com/api/v3/files/{hash_value}"

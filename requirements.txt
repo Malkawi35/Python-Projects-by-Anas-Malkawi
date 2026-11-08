@@ -1,0 +1,24 @@
+# Install with: pip install -r requirements.txt
+# Grouped by the project that needs each package.
+
+# recon-osint
+python-nmap==0.7.1
+python-whois==0.9.4
+shodan==1.31.0
+beautifulsoup4==4.12.3
+html5lib==1.1
+requests==2.32.3
+
+# defensive-security
+psutil==6.0.0
+PyPDF2==3.0.1
+fpdf2==2.7.9
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+matplotlib==3.9.0
+seaborn==0.13.2
+
+# offensive-security-labs (authorized lab use only)
+scapy==2.5.0
+paramiko==3.4.0
